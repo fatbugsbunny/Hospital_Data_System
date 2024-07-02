@@ -1,5 +1,7 @@
-package com.example.hospitalsystem;
+package com.example.hospitalsystem.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,9 +12,11 @@ public class AdmissionState {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(nullable = false)
     private LocalDateTime enteringDate;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column
     private LocalDateTime exitingDate;
 
@@ -29,6 +33,7 @@ public class AdmissionState {
     @JoinColumn(name = "clinical_data")
     private ClinicalData clinicalData;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
