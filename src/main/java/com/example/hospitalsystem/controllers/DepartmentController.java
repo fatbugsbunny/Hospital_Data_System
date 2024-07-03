@@ -19,7 +19,7 @@ public class DepartmentController {
 
     @PostMapping("/add")
     public void addDepartment(@RequestBody Department department, @RequestBody String doctorName) {
-        auditTrailService.createAuditTrailForNewDepartment(department.getId(), doctorName );
+        auditTrailService.createAuditTrailForNewDepartment(department.getId());
         departmentService.addDepartment(department);
     }
 

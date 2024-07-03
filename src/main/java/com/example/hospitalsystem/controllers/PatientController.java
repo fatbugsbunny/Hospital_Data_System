@@ -26,8 +26,7 @@ public class PatientController {
 
     @PostMapping("/add")
     public void addPatient(@RequestBody Patient patient) {
-        String doctorName = "Steven";
-        auditTrailService.createAuditTrailForNewPatient(patient.getId(), doctorName);
+        auditTrailService.createAuditTrailForNewPatient(patient.getId());
         patientService.createPatient(patient);
     }
 
@@ -56,7 +55,7 @@ public class PatientController {
         Patient originalPatient = patientService.getPatient(id);
         if(originalPatient.getDepartment() == null){
         }else if(originalPatient.getDepartment().getId() != updatedPatient.getDepartment().getId()){
-            auditTrailService.createAuditTrailForDepartmentChange(updatedPatient, originalPatient, "Steven");
+            auditTrailService.createAuditTrailForDepartmentChange(updatedPatient, originalPatient);
         }
         patientService.updatePatient(id, updatedPatient);
     }
@@ -71,10 +70,9 @@ public class PatientController {
 
     @PostMapping("/{id}/admissionState")
     public void addAdmissionState(@PathVariable Long id, @RequestBody AdmissionState admissionState) {
-        String doctorName = "Steven";
         List<AdmissionState> states = patientService.getAllAdmissionStates(id);
         patientService.addAdmissionState(id, admissionState);
-        auditTrailService.createAuditTrailForNewAdmission(id,admissionState, doctorName, states);
+        auditTrailService.createAuditTrailForNewAdmission(id,admissionState, states);
     }
 
     @GetMapping("/{id}/admissionState")
@@ -86,7 +84,7 @@ public class PatientController {
     public void addClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
         String oldClinicalRecord = patientService.getClinicalRecord(id);
 
-        auditTrailService.createAuditTrailForClinicalDataChange(id, "Steven", oldClinicalRecord, clinicalData.getClinicalRecord());
+        auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.getClinicalRecord());
         patientService.editClinicalData(id, clinicalData);
     }
 
@@ -98,8 +96,8 @@ public class PatientController {
     }
 
     @PostMapping("/{id}/discharge")
-    public void dischargePatient(@PathVariable Long id, @RequestBody String reason, @RequestBody String doctorName){
-        auditTrailService.createAuditTrailForDischarge(id,reason, doctorName);
+    public void dischargePatient(@PathVariable Long id, @RequestBody String reason){
+        auditTrailService.createAuditTrailForDischarge(id,reason);
         patientService.dischargePatient(id);
     }
 

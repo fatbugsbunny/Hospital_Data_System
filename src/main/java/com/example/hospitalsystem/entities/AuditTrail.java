@@ -25,9 +25,6 @@ public class AuditTrail {
     private LocalDateTime timestamp;
 
     @Column(nullable = false)
-    private String changedBy;
-
-    @Column(nullable = false)
     private String oldValue;
 
     @Column(nullable = false)
@@ -72,14 +69,6 @@ public class AuditTrail {
 
     public void setTimestamp(LocalDateTime time) {
         this.timestamp = time;
-    }
-
-    public String getChangedBy() {
-        return changedBy;
-    }
-
-    public void setChangedBy(String changed_by) {
-        this.changedBy = changed_by;
     }
 
     public String getOldValue() {

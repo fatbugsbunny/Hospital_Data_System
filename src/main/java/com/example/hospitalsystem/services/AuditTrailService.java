@@ -2,7 +2,6 @@ package com.example.hospitalsystem.services;
 
 import com.example.hospitalsystem.entities.AdmissionState;
 import com.example.hospitalsystem.entities.AuditTrail;
-import com.example.hospitalsystem.entities.ClinicalData;
 import com.example.hospitalsystem.entities.Patient;
 import com.example.hospitalsystem.repositories.AuditTrailRepository;
 import org.springframework.stereotype.Service;
@@ -21,9 +20,8 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForDischarge(Long id, String reason, String name) {
+    public void createAuditTrailForDischarge(Long id, String reason) {
         AuditTrail auditTrail = new AuditTrail();
-        auditTrail.setChangedBy(name);
         auditTrail.setPatientId(id);
         auditTrail.setTableName("admission_state");
         auditTrail.setColumnName("discharge");
@@ -32,7 +30,7 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForNewAdmission(Long id,AdmissionState admissionState, String doctorName, List<AdmissionState> states) {
+    public void createAuditTrailForNewAdmission(Long id,AdmissionState admissionState, List<AdmissionState> states) {
         AuditTrail auditTrail = new AuditTrail();
         if (states.isEmpty()) {
             auditTrail.setOldValue("-");
@@ -43,51 +41,46 @@ public class AuditTrailService {
         auditTrail.setTableName("admission_state");
         auditTrail.setColumnName("all");
         auditTrail.setNewValue("New admission with id: " + admissionState.getId());
-        auditTrail.setChangedBy(doctorName);
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForDepartmentChange(Patient updatedPatient, Patient originalPatient, String doctorName) {
+    public void createAuditTrailForDepartmentChange(Patient updatedPatient, Patient originalPatient) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(originalPatient.getId());
         auditTrail.setTableName("department");
         auditTrail.setColumnName("name");
         auditTrail.setOldValue(originalPatient.getDepartment().getName());
         auditTrail.setNewValue(updatedPatient.getDepartment().getName());
-        auditTrail.setChangedBy(doctorName);
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForNewPatient(Long id, String doctorName) {
+    public void createAuditTrailForNewPatient(Long id) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
         auditTrail.setTableName("patient");
         auditTrail.setColumnName("all");
         auditTrail.setOldValue("-");
         auditTrail.setNewValue("Patient with id: " + id);
-        auditTrail.setChangedBy(doctorName);
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForClinicalDataChange(Long id, String doctorName, String previousClinicalData, String newClinicalData) {
+    public void createAuditTrailForClinicalDataChange(Long id, String previousClinicalData, String newClinicalData) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
         auditTrail.setTableName("clinical_data");
         auditTrail.setColumnName("clinical_record");
         auditTrail.setOldValue(previousClinicalData);
         auditTrail.setNewValue(newClinicalData);
-        auditTrail.setChangedBy(doctorName);
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForNewDepartment(long id, String doctorName) {
+    public void createAuditTrailForNewDepartment(Long id) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
         auditTrail.setTableName("department");
         auditTrail.setColumnName("all");
         auditTrail.setOldValue("-");
         auditTrail.setNewValue("Department with id: " + id);
-        auditTrail.setChangedBy(doctorName);
         repository.save(auditTrail);
     }
 }
