@@ -23,7 +23,7 @@ public class DepartmentService {
         try {
             repository.save(department);
         } catch (DataIntegrityViolationException e) {
-            throw new DepartmentAlreadyExistsException("Department with name " + department.getName() + " and code " + department.getCode() + ", already exists");
+            throw new DepartmentAlreadyExistsException("Department with that name or code already exists");
         }
     }
 

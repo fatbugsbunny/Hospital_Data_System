@@ -23,11 +23,9 @@ public class Patient {
     @Column(unique = true, nullable = false)
     private LocalDate birthDate;
 
-    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "department_id", referencedColumnName = "id")
     private Department department;
-
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     private List<AdmissionState> admissionState;

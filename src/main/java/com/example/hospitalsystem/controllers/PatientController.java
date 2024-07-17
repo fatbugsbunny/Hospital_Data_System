@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:8100")
 @RestController
 @RequestMapping("/patient")
 public class PatientController {
@@ -25,9 +26,9 @@ public class PatientController {
     }
 
     @PostMapping("/add")
-    public void addPatient(@RequestBody Patient patient) {
+    public Patient addPatient(@RequestBody Patient patient) {
         auditTrailService.createAuditTrailForNewPatient(patient.getId());
-        patientService.createPatient(patient);
+        return patientService.createPatient(patient);
     }
 
     @GetMapping
@@ -53,8 +54,7 @@ public class PatientController {
     @PutMapping("/{id}")
     public void updatePatient(@PathVariable Long id, @RequestBody Patient updatedPatient) {
         Patient originalPatient = patientService.getPatient(id);
-        if(originalPatient.getDepartment() == null){
-        }else if(originalPatient.getDepartment().getId() != updatedPatient.getDepartment().getId()){
+        if(originalPatient.getDepartment().getId() != updatedPatient.getDepartment().getId()){
             auditTrailService.createAuditTrailForDepartmentChange(updatedPatient, originalPatient);
         }
         patientService.updatePatient(id, updatedPatient);
@@ -83,7 +83,6 @@ public class PatientController {
     @PostMapping("/{id}/clinicalData")
     public void addClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
         String oldClinicalRecord = patientService.getClinicalRecord(id);
-
         auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.getClinicalRecord());
         patientService.editClinicalData(id, clinicalData);
     }
@@ -100,7 +99,6 @@ public class PatientController {
         auditTrailService.createAuditTrailForDischarge(id,reason);
         patientService.dischargePatient(id);
     }
-
 
     @GetMapping("/{id}/allClinicalData")
     public List<ClinicalData> getAllClinicalData(@PathVariable Long id) {

@@ -17,8 +17,8 @@ public class DepartmentController {
         this.auditTrailService = auditTrailService;
     }
 
-    @PostMapping("/add")
-    public void addDepartment(@RequestBody Department department, @RequestBody String doctorName) {
+    @PostMapping( "/add")
+    public void addDepartment(@RequestBody Department department) {
         auditTrailService.createAuditTrailForNewDepartment(department.getId());
         departmentService.addDepartment(department);
     }

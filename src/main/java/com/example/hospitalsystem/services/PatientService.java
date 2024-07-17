@@ -15,8 +15,8 @@ public class PatientService {
         this.repository = repository;
     }
 
-    public void createPatient(Patient patient) {
-        repository.save(patient);
+    public Patient createPatient(Patient patient) {
+        return repository.save(patient);
     }
 
     public Patient getPatient(String name, String lastName) {
