@@ -8,7 +8,6 @@ import com.example.hospitalsystem.repositories.PatientRepository;
 import com.example.hospitalsystem.services.PatientService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -142,11 +141,11 @@ class PatientServiceTests {
         patientService.addAdmissionState(0L, admissionState1);
 
         Mockito.verify(repository, Mockito.times(1)).findById(0L);
-        assertEquals(2, patient.getAdmissionStates().size());
+        assertEquals(2, patient.getAdmissionState().size());
     }
 
     @Test
-    void editClinicalData_ChangeData(){
+    void setClinicalData_ChangeData(){
         Patient patient = new Patient();
         patient.setId(0L);
         List<AdmissionState> admissionStates = new ArrayList<>();
@@ -160,7 +159,7 @@ class PatientServiceTests {
 
         Mockito.when(repository.findById(0L)).thenReturn(Optional.of(patient));
 
-        patientService.editClinicalData(0L, data);
+        patientService.setClinicalData(0L, data);
 
         Mockito.verify(repository, Mockito.times(1)).findById(0L);
         assertEquals(patient.getCurrentState().getClinicalData().getClinicalRecord(), data.getClinicalRecord());

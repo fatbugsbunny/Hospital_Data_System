@@ -1,8 +1,6 @@
 package com.example.hospitalsystem.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -38,6 +36,7 @@ public class Patient {
     public void addAdmissionState(AdmissionState admissionState) {
         this.admissionState.add(admissionState);
     }
+
     public long getId() {
         return id;
     }
@@ -82,7 +81,7 @@ public class Patient {
         this.admissionState = admissionState;
     }
 
-    public List<AdmissionState> getAdmissionStates() {
+    public List<AdmissionState> getAdmissionState() {
         return admissionState;
     }
 
@@ -99,3 +98,5 @@ public class Patient {
         return p.getDepartment() == this.getDepartment() && p.getLastName().equals(this.getLastName()) && p.getBirthDate().equals(this.getBirthDate()) && p.getName().equals(this.getName());
     }
 }
+
+

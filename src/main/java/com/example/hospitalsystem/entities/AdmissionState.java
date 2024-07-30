@@ -30,7 +30,7 @@ public class AdmissionState {
     private boolean discharge;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "clinical_data")
+    @JoinColumn(name = "clinical_data", referencedColumnName = "id")
     private ClinicalData clinicalData;
 
     @JsonIgnore

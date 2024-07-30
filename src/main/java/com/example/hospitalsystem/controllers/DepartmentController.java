@@ -19,8 +19,8 @@ public class DepartmentController {
 
     @PostMapping( "/add")
     public void addDepartment(@RequestBody Department department) {
-        auditTrailService.createAuditTrailForNewDepartment(department.getId());
-        departmentService.addDepartment(department);
+        Department savedDepartment = departmentService.addDepartment(department);
+        auditTrailService.createAuditTrailForNewDepartment(savedDepartment.getId());
     }
 
     @GetMapping("/{name}")

@@ -19,9 +19,9 @@ public class DepartmentService {
         this.repository = repository;
     }
 
-    public void addDepartment(Department department) {
+    public Department addDepartment(Department department) {
         try {
-            repository.save(department);
+            return repository.save(department);
         } catch (DataIntegrityViolationException e) {
             throw new DepartmentAlreadyExistsException("Department with that name or code already exists");
         }

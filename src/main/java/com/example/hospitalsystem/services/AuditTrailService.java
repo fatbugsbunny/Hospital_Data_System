@@ -6,6 +6,7 @@ import com.example.hospitalsystem.entities.Patient;
 import com.example.hospitalsystem.repositories.AuditTrailRepository;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 @Service
@@ -20,6 +21,37 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
+    public void createAuditTrailForPatientDataChange(Long patientId, Long oldDepartmentId, Long newDepartmentId){
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setPatientId(patientId);
+        auditTrail.setTableName("patient");
+        auditTrail.setColumnName("department_id");
+        auditTrail.setOldValue(oldDepartmentId.toString());
+        auditTrail.setNewValue(newDepartmentId.toString());
+        repository.save(auditTrail);
+    }
+
+    public void createAuditTrailForPatientDataChange(Patient original, Patient updated) throws IllegalAccessException {
+        for (Field field : Patient.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            Object value1 = field.get(original);
+            Object value2 = field.get(updated);
+
+            System.out.println(value1);
+            System.out.println(value2);
+
+            if (value2 != null && !(value1.equals(value2))) {
+                AuditTrail auditTrail = new AuditTrail();
+                auditTrail.setPatientId(original.getId());
+                auditTrail.setTableName("patient");
+                auditTrail.setColumnName(field.getName());
+                auditTrail.setOldValue(value1.toString());
+                auditTrail.setNewValue(value2.toString());
+                repository.save(auditTrail);
+            }
+        }
+    }
+
     public void createAuditTrailForDischarge(Long id, String reason) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
@@ -30,7 +62,7 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForNewAdmission(Long id,AdmissionState admissionState, List<AdmissionState> states) {
+    public void createAuditTrailForNewAdmission(Long id, AdmissionState admissionState, List<AdmissionState> states) {
         AuditTrail auditTrail = new AuditTrail();
         if (states.isEmpty()) {
             auditTrail.setOldValue("-");
@@ -41,16 +73,6 @@ public class AuditTrailService {
         auditTrail.setTableName("admission_state");
         auditTrail.setColumnName("all");
         auditTrail.setNewValue("New admission with id: " + admissionState.getId());
-        repository.save(auditTrail);
-    }
-
-    public void createAuditTrailForDepartmentChange(Patient updatedPatient, Patient originalPatient) {
-        AuditTrail auditTrail = new AuditTrail();
-        auditTrail.setPatientId(originalPatient.getId());
-        auditTrail.setTableName("department");
-        auditTrail.setColumnName("name");
-        auditTrail.setOldValue(originalPatient.getDepartment().getName());
-        auditTrail.setNewValue(updatedPatient.getDepartment().getName());
         repository.save(auditTrail);
     }
 

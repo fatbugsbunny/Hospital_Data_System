@@ -77,7 +77,7 @@ Other Threads:
 
 [error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007fff1ca5a877]
 
-VM state: not at safepoint (not fully initialized)
+VM admissionState: not at safepoint (not fully initialized)
 
 VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
 [0x000001c7ebcf6680] Heap_lock - owner thread: 0x000001c7ebcf8760

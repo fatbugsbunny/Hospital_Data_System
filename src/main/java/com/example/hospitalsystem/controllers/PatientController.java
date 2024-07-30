@@ -27,8 +27,9 @@ public class PatientController {
 
     @PostMapping("/add")
     public Patient addPatient(@RequestBody Patient patient) {
-        auditTrailService.createAuditTrailForNewPatient(patient.getId());
-        return patientService.createPatient(patient);
+        Patient savedPatient = patientService.savePatient(patient);
+        auditTrailService.createAuditTrailForNewPatient(savedPatient.getId());
+        return savedPatient;
     }
 
     @GetMapping
@@ -37,7 +38,7 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    public Patient getPatient(@PathVariable Long id){
+    public Patient getPatient(@PathVariable Long id) {
         return patientService.getPatient(id);
     }
 
@@ -52,27 +53,27 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public void updatePatient(@PathVariable Long id, @RequestBody Patient updatedPatient) {
+    public void updatePatient(@PathVariable Long id, @RequestBody Patient updatedPatient) throws IllegalAccessException {
         Patient originalPatient = patientService.getPatient(id);
-        if(originalPatient.getDepartment().getId() != updatedPatient.getDepartment().getId()){
-            auditTrailService.createAuditTrailForDepartmentChange(updatedPatient, originalPatient);
-        }
+        auditTrailService.createAuditTrailForPatientDataChange(originalPatient, updatedPatient);
         patientService.updatePatient(id, updatedPatient);
     }
 
     @PutMapping("/{patientId}/department/{departmentId}")
     public void assignDepartmentToPatient(@PathVariable Long patientId, @PathVariable Long departmentId) {
-        Patient patient = patientService.getPatient(patientId);
-        Department department = departmentService.getDepartment(departmentId);
-        patient.setDepartment(department);
-        patientService.createPatient(patient);
+        try {
+            auditTrailService.createAuditTrailForPatientDataChange(patientId, patientService.getPatient(patientId).getDepartment().getId(), departmentId);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        patientService.setDepartment(patientId, departmentService.getDepartment(departmentId));
     }
 
     @PostMapping("/{id}/admissionState")
     public void addAdmissionState(@PathVariable Long id, @RequestBody AdmissionState admissionState) {
         List<AdmissionState> states = patientService.getAllAdmissionStates(id);
-        patientService.addAdmissionState(id, admissionState);
-        auditTrailService.createAuditTrailForNewAdmission(id,admissionState, states);
+        AdmissionState admissionStateWithId = patientService.addAdmissionState(id, admissionState);
+        auditTrailService.createAuditTrailForNewAdmission(id, admissionStateWithId, states);
     }
 
     @GetMapping("/{id}/admissionState")
@@ -80,11 +81,16 @@ public class PatientController {
         return patientService.getAdmissionState(id);
     }
 
-    @PostMapping("/{id}/clinicalData")
-    public void addClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
+    @GetMapping("/{id}/allAdmissionStates")
+    public List<AdmissionState> getAllAdmissionStates(@PathVariable Long id) {
+        return patientService.getAllAdmissionStates(id);
+    }
+
+    @PutMapping("/{id}/clinicalData")
+    public void setClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
         String oldClinicalRecord = patientService.getClinicalRecord(id);
         auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.getClinicalRecord());
-        patientService.editClinicalData(id, clinicalData);
+        patientService.setClinicalData(id, clinicalData);
     }
 
     @GetMapping("/{id}/clinicalData")
@@ -94,9 +100,9 @@ public class PatientController {
         return data;
     }
 
-    @PostMapping("/{id}/discharge")
-    public void dischargePatient(@PathVariable Long id, @RequestBody String reason){
-        auditTrailService.createAuditTrailForDischarge(id,reason);
+    @PutMapping("/{id}/discharge")
+    public void dischargePatient(@PathVariable Long id, @RequestParam String reason) {
+        auditTrailService.createAuditTrailForDischarge(id, reason);
         patientService.dischargePatient(id);
     }
 
