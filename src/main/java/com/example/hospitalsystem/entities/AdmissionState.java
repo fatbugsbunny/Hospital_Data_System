@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 public class AdmissionState {
@@ -100,5 +101,17 @@ public class AdmissionState {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AdmissionState that)) return false;
+        return id == that.id && discharge == that.discharge && Objects.equals(enteringDate, that.enteringDate) && Objects.equals(exitingDate, that.exitingDate) && Objects.equals(cause, that.cause) && Objects.equals(reason, that.reason) && Objects.equals(clinicalData, that.clinicalData) && Objects.equals(patient, that.patient);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, enteringDate, exitingDate, cause, reason, discharge, clinicalData, patient);
     }
 }

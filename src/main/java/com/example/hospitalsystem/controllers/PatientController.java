@@ -1,9 +1,10 @@
 package com.example.hospitalsystem.controllers;
 
+import com.example.hospitalsystem.Dtos.PatientDto;
 import com.example.hospitalsystem.entities.AdmissionState;
 import com.example.hospitalsystem.entities.ClinicalData;
-import com.example.hospitalsystem.entities.Department;
 import com.example.hospitalsystem.entities.Patient;
+import com.example.hospitalsystem.exceptions.PatientIsAlreadyAdmittedException;
 import com.example.hospitalsystem.services.AuditTrailService;
 import com.example.hospitalsystem.services.DepartmentService;
 import com.example.hospitalsystem.services.PatientService;
@@ -26,7 +27,7 @@ public class PatientController {
     }
 
     @PostMapping("/add")
-    public Patient addPatient(@RequestBody Patient patient) {
+    public Patient addPatient(@RequestBody PatientDto patient) {
         Patient savedPatient = patientService.savePatient(patient);
         auditTrailService.createAuditTrailForNewPatient(savedPatient.getId());
         return savedPatient;
@@ -62,7 +63,7 @@ public class PatientController {
     @PutMapping("/{patientId}/department/{departmentId}")
     public void assignDepartmentToPatient(@PathVariable Long patientId, @PathVariable Long departmentId) {
         try {
-            auditTrailService.createAuditTrailForPatientDataChange(patientId, patientService.getPatient(patientId).getDepartment().getId(), departmentId);
+            auditTrailService.createAuditTrailForPatientDepartmentChange(patientId, patientService.getPatient(patientId).getDepartment().getId(), departmentId);
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -72,13 +73,16 @@ public class PatientController {
     @PostMapping("/{id}/admissionState")
     public void addAdmissionState(@PathVariable Long id, @RequestBody AdmissionState admissionState) {
         List<AdmissionState> states = patientService.getAllAdmissionStates(id);
+        if(!states.getLast().isDischarge()){
+            throw new PatientIsAlreadyAdmittedException();
+        }
         AdmissionState admissionStateWithId = patientService.addAdmissionState(id, admissionState);
         auditTrailService.createAuditTrailForNewAdmission(id, admissionStateWithId, states);
     }
 
     @GetMapping("/{id}/admissionState")
-    public AdmissionState getAdmissionState(@PathVariable Long id) {
-        return patientService.getAdmissionState(id);
+    public AdmissionState getCurrentAdmissionState(@PathVariable Long id) {
+        return patientService.getCurrentAdmissionState(id);
     }
 
     @GetMapping("/{id}/allAdmissionStates")
@@ -87,22 +91,22 @@ public class PatientController {
     }
 
     @PutMapping("/{id}/clinicalData")
-    public void setClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
-        String oldClinicalRecord = patientService.getClinicalRecord(id);
+    public void setCurrentClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
+        String oldClinicalRecord = patientService.getCurrentClinicalRecord(id);
         auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.getClinicalRecord());
-        patientService.setClinicalData(id, clinicalData);
+        patientService.setCurrentClinicalData(id, clinicalData);
     }
 
     @GetMapping("/{id}/clinicalData")
-    public ClinicalData getClinicalData(@PathVariable Long id) {
+    public ClinicalData getCurrentClinicalData(@PathVariable Long id) {
         ClinicalData data = new ClinicalData();
-        data.setClinicalRecord(patientService.getClinicalRecord(id));
+        data.setClinicalRecord(patientService.getCurrentClinicalRecord(id));
         return data;
     }
 
     @PutMapping("/{id}/discharge")
     public void dischargePatient(@PathVariable Long id, @RequestParam String reason) {
-        auditTrailService.createAuditTrailForDischarge(id, reason);
+        auditTrailService.createAuditTrailForPatientDischarge(id, reason);
         patientService.dischargePatient(id);
     }
 
@@ -112,7 +116,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}/clinicalData")
-    public void deleteClinicalData(@PathVariable Long id) {
-        patientService.deleteClinicalData(id);
+    public void deleteCurrentClinicalData(@PathVariable Long id) {
+        patientService.deleteCurrentClinicalData(id);
     }
 }

@@ -21,7 +21,17 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForPatientDataChange(Long patientId, Long oldDepartmentId, Long newDepartmentId){
+    public void createAuditTrailForPatientDischarge(Long id, String reason) {
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setPatientId(id);
+        auditTrail.setTableName("admission_state");
+        auditTrail.setColumnName("discharge");
+        auditTrail.setOldValue("false");
+        auditTrail.setNewValue("true-" + reason);
+        repository.save(auditTrail);
+    }
+
+    public void createAuditTrailForPatientDepartmentChange(Long patientId, Long oldDepartmentId, Long newDepartmentId){
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(patientId);
         auditTrail.setTableName("patient");
@@ -37,9 +47,6 @@ public class AuditTrailService {
             Object value1 = field.get(original);
             Object value2 = field.get(updated);
 
-            System.out.println(value1);
-            System.out.println(value2);
-
             if (value2 != null && !(value1.equals(value2))) {
                 AuditTrail auditTrail = new AuditTrail();
                 auditTrail.setPatientId(original.getId());
@@ -52,13 +59,13 @@ public class AuditTrailService {
         }
     }
 
-    public void createAuditTrailForDischarge(Long id, String reason) {
+    public void createAuditTrailForClinicalDataChange(Long id, String previousClinicalData, String newClinicalData) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
-        auditTrail.setTableName("admission_state");
-        auditTrail.setColumnName("discharge");
-        auditTrail.setOldValue("false");
-        auditTrail.setNewValue("true-" + reason);
+        auditTrail.setTableName("clinical_data");
+        auditTrail.setColumnName("clinical_record");
+        auditTrail.setOldValue(previousClinicalData);
+        auditTrail.setNewValue(newClinicalData);
         repository.save(auditTrail);
     }
 
@@ -67,7 +74,7 @@ public class AuditTrailService {
         if (states.isEmpty()) {
             auditTrail.setOldValue("-");
         } else {
-            auditTrail.setOldValue(states.get(states.size() - 1).getEnteringDate().toString());
+            auditTrail.setOldValue(states.get(states.size() - 2).getEnteringDate().toString());
         }
         auditTrail.setPatientId(id);
         auditTrail.setTableName("admission_state");
@@ -86,16 +93,6 @@ public class AuditTrailService {
         repository.save(auditTrail);
     }
 
-    public void createAuditTrailForClinicalDataChange(Long id, String previousClinicalData, String newClinicalData) {
-        AuditTrail auditTrail = new AuditTrail();
-        auditTrail.setPatientId(id);
-        auditTrail.setTableName("clinical_data");
-        auditTrail.setColumnName("clinical_record");
-        auditTrail.setOldValue(previousClinicalData);
-        auditTrail.setNewValue(newClinicalData);
-        repository.save(auditTrail);
-    }
-
     public void createAuditTrailForNewDepartment(Long id) {
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(id);
@@ -105,4 +102,5 @@ public class AuditTrailService {
         auditTrail.setNewValue("Department with id: " + id);
         repository.save(auditTrail);
     }
+
 }

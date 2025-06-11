@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 public class AuditTrail {
@@ -85,5 +86,22 @@ public class AuditTrail {
 
     public void setNewValue(String new_value) {
         this.newValue = new_value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AuditTrail that)) return false;
+        return id == that.id && patientId == that.patientId && Objects.equals(tableName, that.tableName) && Objects.equals(columnName, that.columnName) && Objects.equals(timestamp, that.timestamp) && Objects.equals(oldValue, that.oldValue) && Objects.equals(newValue, that.newValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, patientId, tableName, columnName, timestamp, oldValue, newValue);
+    }
+
+    @Override
+    public String toString() {
+        return tableName + columnName + oldValue + newValue;
     }
 }

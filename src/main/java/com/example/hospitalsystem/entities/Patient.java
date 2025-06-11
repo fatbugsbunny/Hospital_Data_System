@@ -5,9 +5,11 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class Patient {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -30,7 +32,7 @@ public class Patient {
 
     @JsonIgnore
     public AdmissionState getCurrentState() {
-        return admissionState.get(admissionState.size() - 1);
+        return admissionState.getLast();
     }
 
     public void addAdmissionState(AdmissionState admissionState) {
@@ -86,16 +88,15 @@ public class Patient {
     }
 
     @Override
-    public boolean equals(Object o){
-        if (o == this) {
-            return true;
-        }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Patient patient)) return false;
+        return id == patient.id && Objects.equals(name, patient.name) && Objects.equals(lastName, patient.lastName) && Objects.equals(birthDate, patient.birthDate) && Objects.equals(department, patient.department) && Objects.equals(admissionState, patient.admissionState);
+    }
 
-        if (!(o instanceof Patient p)) {
-            return false;
-        }
-
-        return p.getDepartment() == this.getDepartment() && p.getLastName().equals(this.getLastName()) && p.getBirthDate().equals(this.getBirthDate()) && p.getName().equals(this.getName());
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName, birthDate, department, admissionState);
     }
 }
 

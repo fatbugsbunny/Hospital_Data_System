@@ -8,10 +8,6 @@ import com.example.hospitalsystem.repositories.DepartmentRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.Iterator;
-import java.util.List;
-
 @Service
 public class DepartmentService {
     private final DepartmentRepository repository;
@@ -50,18 +46,15 @@ public class DepartmentService {
         }
     }
 
-    public void updateDepartment(long id, Department newDepartment) {
+    public void updateDepartment(long id, Department updatedDepartment) {
         Department department = repository.findById(id).orElseThrow(() -> new DepartmentDoesNotExistException("Department with id " + id + " does not exist"));
+
+        updatedDepartment.setId(department.getId());
+
         try {
-            repository.save(copyFields(newDepartment, department));
+            repository.save(updatedDepartment);
         } catch (DataIntegrityViolationException e) {
             throw new DepartmentAlreadyExistsException("The code or name is taken by another department");
         }
-    }
-
-    private Department copyFields(Department source, Department target) {
-        target.setCode(source.getCode());
-        target.setName(source.getName());
-        return target;
     }
 }

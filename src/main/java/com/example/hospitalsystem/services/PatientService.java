@@ -18,18 +18,15 @@ public class PatientService {
     }
 
     public Patient savePatient(Patient patient) {
-        Patient returnePatient = repository.save(patient);
-        System.out.println(returnePatient.getId());
-        return returnePatient;
-    }
-
-    public Patient getPatient(String name, String lastName) {
-        return repository.findByNameAndLastName(name, lastName).orElseThrow(() -> new PatientDoesNotExistException("Patient with name " + name + " and surname " + lastName + " does not exist"));
-
+        return repository.save(patient);
     }
 
     public Iterable<Patient> getAllPatients() {
         return repository.findAll();
+    }
+
+    public Patient getPatient(String name, String lastName) {
+        return repository.findByNameAndLastName(name, lastName).orElseThrow(() -> new PatientDoesNotExistException("Patient with name " + name + " and surname " + lastName + " does not exist"));
     }
 
     public Patient getPatient(Long patientId) {
@@ -53,17 +50,14 @@ public class PatientService {
         repository.save(patient);
     }
 
-    public List<ClinicalData> getAllClinicalData(Long patientId) {
+    public List<AdmissionState> getAllAdmissionStates(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        List<ClinicalData> clinicalDataList = new ArrayList<>();
-        patient.getAdmissionState().stream().map(AdmissionState::getClinicalData).forEach(clinicalDataList::add);
-        return clinicalDataList;
+        return patient.getAdmissionState();
     }
 
-    public void deleteClinicalData(Long patientId) {
+    public AdmissionState getCurrentAdmissionState(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        patient.getCurrentState().setClinicalData(null);
-        repository.save(patient);
+        return patient.getCurrentState();
     }
 
     public AdmissionState addAdmissionState(Long patientId, AdmissionState admissionState) {
@@ -74,22 +68,26 @@ public class PatientService {
         return patient.getCurrentState();
     }
 
-    public AdmissionState getAdmissionState(Long patientId) {
+
+    public List<ClinicalData> getAllClinicalData(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        return patient.getCurrentState();
+        List<ClinicalData> clinicalDataList = new ArrayList<>();
+        patient.getAdmissionState().stream().map(AdmissionState::getClinicalData).forEach(clinicalDataList::add);
+        return clinicalDataList;
     }
 
-    public List<AdmissionState> getAllAdmissionStates(Long patientId) {
-        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        return patient.getAdmissionState();
-    }
-
-    public String getClinicalRecord(Long patientId) {
+    public String getCurrentClinicalRecord(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
         return patient.getCurrentState().getClinicalData() != null ? patient.getCurrentState().getClinicalData().getClinicalRecord() : "No clinical dat exists";
     }
 
-    public void setClinicalData(Long patientId, ClinicalData clinicalData) {
+    public void deleteCurrentClinicalData(Long patientId) {
+        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
+        patient.getCurrentState().setClinicalData(null);
+        repository.save(patient);
+    }
+
+    public void setCurrentClinicalData(Long patientId, ClinicalData clinicalData) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
         patient.getCurrentState().setClinicalData(clinicalData);
         clinicalData.setAdmissionState(patient.getCurrentState());

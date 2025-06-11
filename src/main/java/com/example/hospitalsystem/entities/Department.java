@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class Department {
@@ -61,9 +62,12 @@ public class Department {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+        if (!(o instanceof Department d1)) return false;
+        return id == d1.id && Objects.equals(code, d1.code) && Objects.equals(name, d1.name);
+    }
 
-        if (!(o instanceof Department d)) return false;
-
-        return d.getCode().equals(this.getCode()) && d.getName().equals(this.getName());
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, code, name);
     }
 }
