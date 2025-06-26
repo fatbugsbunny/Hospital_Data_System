@@ -1,6 +1,9 @@
 package com.example.hospitalsystem.services;
 
 
+import com.example.hospitalsystem.Dtos.AdmissionStateDto;
+import com.example.hospitalsystem.Dtos.PatientDto;
+import com.example.hospitalsystem.Dtos.PatientSummaryDto;
 import com.example.hospitalsystem.entities.AdmissionState;
 import com.example.hospitalsystem.entities.AuditTrail;
 import com.example.hospitalsystem.entities.Patient;
@@ -36,37 +39,30 @@ class AuditTrailServiceTest {
     @Test
     @DisplayName("Patient name, last name, and birthdate is changed successfully ")
     void shouldRecordPatientDataChangeSuccessfullyWhenItsChanged() {
-        Patient original = new Patient();
-        Patient updated = new Patient();
+        PatientDto original = new PatientDto(0L,"John","Doe",LocalDate.of(2002, 3, 14),null, null);
 
-        original.setName("John");
-        original.setLastName("Doe");
-        original.setBirthDate(LocalDate.of(2002, 3, 14));
-
-        updated.setName("Jane");
-        updated.setLastName("Smith");
-        updated.setBirthDate(LocalDate.of(2004, 3, 14));
+        PatientSummaryDto updated = new PatientSummaryDto("Jane","Smith",LocalDate.of(2004, 3, 14));
 
         AuditTrail nameAuditTrail = new AuditTrail();
-        nameAuditTrail.setPatientId(original.getId());
+        nameAuditTrail.setPatientId(original.id());
         nameAuditTrail.setTableName("patient");
         nameAuditTrail.setColumnName("name");
-        nameAuditTrail.setOldValue(original.getName());
-        nameAuditTrail.setNewValue(updated.getName());
+        nameAuditTrail.setOldValue(original.name());
+        nameAuditTrail.setNewValue(updated.name());
 
         AuditTrail lastNameAuditTrail = new AuditTrail();
-        lastNameAuditTrail.setPatientId(original.getId());
+        lastNameAuditTrail.setPatientId(original.id());
         lastNameAuditTrail.setTableName("patient");
-        lastNameAuditTrail.setColumnName("lastName");
-        lastNameAuditTrail.setOldValue(original.getLastName());
-        lastNameAuditTrail.setNewValue(updated.getLastName());
+        lastNameAuditTrail.setColumnName("last_name");
+        lastNameAuditTrail.setOldValue(original.lastName());
+        lastNameAuditTrail.setNewValue(updated.lastName());
 
         AuditTrail birthDateAuditTrail = new AuditTrail();
-        birthDateAuditTrail.setPatientId(original.getId());
+        birthDateAuditTrail.setPatientId(original.id());
         birthDateAuditTrail.setTableName("patient");
         birthDateAuditTrail.setColumnName("birthDate");
-        birthDateAuditTrail.setOldValue(original.getBirthDate().toString());
-        birthDateAuditTrail.setNewValue(updated.getBirthDate().toString());
+        birthDateAuditTrail.setOldValue(original.birthDate().toString());
+        birthDateAuditTrail.setNewValue(updated.birthDate().toString());
 
         assertDoesNotThrow(() -> auditTrailService.createAuditTrailForPatientDataChange(original, updated));
         verify(repository, Mockito.times(3)).save(ArgumentMatchers.isA(AuditTrail.class));
@@ -75,19 +71,17 @@ class AuditTrailServiceTest {
         verify(repository).save(birthDateAuditTrail);
     }
 
-
     @Test
     void shouldSetOldValueToDashWhenUpdatingStateWithNoPreviousAdmissionStates(){
-        List<AdmissionState> admissionStates = new ArrayList<>();
-        AdmissionState state = new AdmissionState();
-        state.setId(0L);
+        List<AdmissionStateDto> admissionStates = new ArrayList<>();
+        AdmissionStateDto state = new AdmissionStateDto(0L);
 
         AuditTrail auditTrail = new AuditTrail();
         auditTrail.setPatientId(0L);
         auditTrail.setTableName("admission_state");
         auditTrail.setColumnName("all");
         auditTrail.setOldValue("-");
-        auditTrail.setNewValue("New admission with id: " + state.getId());
+        auditTrail.setNewValue("New admission with id: " + state.id());
 
         auditTrailService.createAuditTrailForNewAdmission(0L, state, admissionStates);
 
@@ -96,14 +90,10 @@ class AuditTrailServiceTest {
 
     @Test
     void shouldSetOldValueToPreviousAdmissionStateWhenItExists(){
-        List<AdmissionState> admissionStates = new ArrayList<>();
-        AdmissionState state1 = new AdmissionState();
-        state1.setId(0L);
-        state1.setEnteringDate(LocalDateTime.of(2020, 3, 14, 12, 12));
+        List<AdmissionStateDto> admissionStates = new ArrayList<>();
+        AdmissionStateDto state1 = new AdmissionStateDto(0L,LocalDateTime.now(),null,null,null,null,null);
 
-        AdmissionState state2 = new AdmissionState();
-        state2.setEnteringDate(LocalDateTime.now());
-        state2.setId(1L);
+        AdmissionStateDto state2 = new AdmissionStateDto(1L);
 
         admissionStates.add(state1);
         admissionStates.add(state2);
@@ -112,8 +102,8 @@ class AuditTrailServiceTest {
         auditTrail.setPatientId(0L);
         auditTrail.setTableName("admission_state");
         auditTrail.setColumnName("all");
-        auditTrail.setOldValue(state1.getEnteringDate().toString());
-        auditTrail.setNewValue("New admission with id: " + state2.getId());
+        auditTrail.setOldValue(state1.enteringDate().toString());
+        auditTrail.setNewValue("New admission with id: " + state2.id());
 
         auditTrailService.createAuditTrailForNewAdmission(0L, state2, admissionStates);
 

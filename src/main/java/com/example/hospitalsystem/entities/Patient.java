@@ -1,6 +1,5 @@
 package com.example.hospitalsystem.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -9,10 +8,9 @@ import java.util.Objects;
 
 @Entity
 public class Patient {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -28,22 +26,28 @@ public class Patient {
     private Department department;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
-    private List<AdmissionState> admissionState;
+    private List<AdmissionState> admissionStates;
 
-    @JsonIgnore
-    public AdmissionState getCurrentState() {
-        return admissionState.getLast();
+    public AdmissionState getCurrentAdmissionState() {
+        return admissionStates.getLast();
     }
 
     public void addAdmissionState(AdmissionState admissionState) {
-        this.admissionState.add(admissionState);
+        admissionState.setPatient(this);
+        this.admissionStates.add(admissionState);
     }
 
-    public long getId() {
+    public void setCurrentClinicalData(ClinicalData clinicalData) {
+        AdmissionState currentState = getCurrentAdmissionState();
+        currentState.setClinicalData(clinicalData);
+        clinicalData.setAdmissionState(currentState);
+    }
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -76,27 +80,32 @@ public class Patient {
     }
 
     public void setDepartment(Department department) {
+        if(this.department != null){
+            this.department.removePatient(this);
+        }
+
         this.department = department;
+        department.addPatient(this);
     }
 
-    public void setAdmissionState(List<AdmissionState> admissionState) {
-        this.admissionState = admissionState;
+    public void setAdmissionStates(List<AdmissionState> admissionState) {
+        this.admissionStates = admissionState;
     }
 
-    public List<AdmissionState> getAdmissionState() {
-        return admissionState;
+    public List<AdmissionState> getAdmissionStates() {
+        return admissionStates;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Patient patient)) return false;
-        return id == patient.id && Objects.equals(name, patient.name) && Objects.equals(lastName, patient.lastName) && Objects.equals(birthDate, patient.birthDate) && Objects.equals(department, patient.department) && Objects.equals(admissionState, patient.admissionState);
+        return Objects.equals(id, patient.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, lastName, birthDate, department, admissionState);
+        return Objects.hashCode(id);
     }
 }
 

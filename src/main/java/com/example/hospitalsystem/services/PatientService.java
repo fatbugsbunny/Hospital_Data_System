@@ -1,7 +1,10 @@
 package com.example.hospitalsystem.services;
 
+import com.example.hospitalsystem.Dtos.*;
 import com.example.hospitalsystem.entities.*;
 import com.example.hospitalsystem.exceptions.PatientDoesNotExistException;
+import com.example.hospitalsystem.mappers.DepartmentMapper;
+import com.example.hospitalsystem.mappers.PatientMapper;
 import com.example.hospitalsystem.repositories.PatientRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,25 +15,29 @@ import java.util.List;
 @Service
 public class PatientService {
     private final PatientRepository repository;
+    private final PatientMapper mapper;
+    private final DepartmentMapper departmentMapper;
 
-    public PatientService(PatientRepository repository) {
+    public PatientService(PatientRepository repository, PatientMapper mapper, DepartmentMapper departmentMapper) {
+        this.departmentMapper = departmentMapper;
+        this.mapper = mapper;
         this.repository = repository;
     }
 
-    public Patient savePatient(Patient patient) {
-        return repository.save(patient);
+    public PatientDto savePatient(PatientDto patientDto) {
+        return mapper.toDto(repository.save(mapper.toEntity(patientDto)));
     }
 
-    public Iterable<Patient> getAllPatients() {
-        return repository.findAll();
+    public Iterable<PatientDto> getAllPatients() {
+        return mapper.toDtos(repository.findAll());
     }
 
-    public Patient getPatient(String name, String lastName) {
-        return repository.findByNameAndLastName(name, lastName).orElseThrow(() -> new PatientDoesNotExistException("Patient with name " + name + " and surname " + lastName + " does not exist"));
+    public PatientDto getPatient(String name, String lastName) {
+        return mapper.toDto(repository.findByNameAndLastName(name, lastName).orElseThrow(() -> new PatientDoesNotExistException("Patient with name " + name + " and surname " + lastName + " does not exist")));
     }
 
-    public Patient getPatient(Long patientId) {
-        return repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
+    public PatientDto getPatient(Long patientId) {
+        return getPatientDtoOrThrowEx(patientId);
     }
 
     public String deletePatient(Long id) {
@@ -38,73 +45,71 @@ public class PatientService {
         return "Patient deleted successfully";
     }
 
-    public void updatePatient(Long patientId, Patient updatedPatient) {
-        Patient originalPatient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        repository.save(copyFields(updatedPatient, originalPatient));
+    public void updatePatient(Long patientId, PatientSummaryDto patientSummaryDto) {
+        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
+        repository.save(mapper.updatePatientFromDto(patientSummaryDto, patient));
     }
 
     public void dischargePatient(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        patient.getCurrentState().setDischarge(true);
-        patient.getCurrentState().setExitingDate(LocalDateTime.now());
+        patient.getCurrentAdmissionState().setDischarge(true);
+        patient.getCurrentAdmissionState().setExitingDate(LocalDateTime.now());
         repository.save(patient);
     }
 
-    public List<AdmissionState> getAllAdmissionStates(Long patientId) {
-        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        return patient.getAdmissionState();
+    public List<AdmissionStateDto> getAllAdmissionStates(Long patientId) {
+        return getPatientDtoOrThrowEx(patientId).admissionStates();
     }
 
-    public AdmissionState getCurrentAdmissionState(Long patientId) {
-        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        return patient.getCurrentState();
+    public AdmissionStateDto getCurrentAdmissionState(Long patientId) {
+        return getPatientDtoOrThrowEx(patientId).currentAdmissionState();
     }
 
-    public AdmissionState addAdmissionState(Long patientId, AdmissionState admissionState) {
+    public AdmissionStateDto addAdmissionState(Long patientId, AdmissionStateDto admissionState) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        admissionState.setPatient(patient);
-        patient.addAdmissionState(admissionState);
+        patient.addAdmissionState(mapper.toEntity(admissionState));
         repository.save(patient);
-        return patient.getCurrentState();
+        return mapper.toDto(patient.getCurrentAdmissionState());
     }
 
 
-    public List<ClinicalData> getAllClinicalData(Long patientId) {
-        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        List<ClinicalData> clinicalDataList = new ArrayList<>();
-        patient.getAdmissionState().stream().map(AdmissionState::getClinicalData).forEach(clinicalDataList::add);
+    public List<ClinicalDataDto> getAllClinicalData(Long patientId) {
+        PatientDto patientDto = getPatientDtoOrThrowEx(patientId);
+        List<ClinicalDataDto> clinicalDataList = new ArrayList<>();
+        patientDto.admissionStates().stream().map(AdmissionStateDto::clinicalData).forEach(clinicalDataList::add);
         return clinicalDataList;
     }
 
+    public ClinicalDataDto getCurrentClinicalData(Long patientId){
+        PatientDto patientDto = getPatientDtoOrThrowEx(patientId);
+        return patientDto.currentAdmissionState().clinicalData();
+    }
+
     public String getCurrentClinicalRecord(Long patientId) {
-        Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        return patient.getCurrentState().getClinicalData() != null ? patient.getCurrentState().getClinicalData().getClinicalRecord() : "No clinical dat exists";
+        PatientDto patientDto = getPatientDtoOrThrowEx(patientId);
+        return patientDto.currentAdmissionState().clinicalData() != null ? patientDto.currentAdmissionState().clinicalData().clinicalRecord() : "No clinical dat exists";
     }
 
     public void deleteCurrentClinicalData(Long patientId) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        patient.getCurrentState().setClinicalData(null);
+        patient.getCurrentAdmissionState().setClinicalData(null);
         repository.save(patient);
     }
 
-    public void setCurrentClinicalData(Long patientId, ClinicalData clinicalData) {
+    public void setCurrentClinicalData(Long patientId, ClinicalDataDto clinicalData) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        patient.getCurrentState().setClinicalData(clinicalData);
-        clinicalData.setAdmissionState(patient.getCurrentState());
+        patient.setCurrentClinicalData(mapper.toEntity(clinicalData));
         repository.save(patient);
     }
 
-    public void setDepartment(Long patientId, Department department) {
+    public void setDepartment(Long patientId, DepartmentDto department) {
         Patient patient = repository.findById(patientId).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + patientId + " does not exist"));
-        patient.setDepartment(department);
+        patient.setDepartment(departmentMapper.toEntity(department));
         repository.save(patient);
     }
 
-    private Patient copyFields(Patient source, Patient target) {
-        target.setBirthDate(source.getBirthDate());
-        target.setLastName(source.getLastName());
-        target.setName(source.getName());
-        return target;
+    private PatientDto getPatientDtoOrThrowEx(Long id) {
+        return mapper.toDto(repository.findById(id).orElseThrow(() -> new PatientDoesNotExistException("Patient with id " + id + " does not exist")));
     }
 
 }

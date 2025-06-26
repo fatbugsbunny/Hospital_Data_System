@@ -1,24 +1,23 @@
 package com.example.hospitalsystem.services;
 
+import com.example.hospitalsystem.Dtos.*;
 import com.example.hospitalsystem.entities.AdmissionState;
 import com.example.hospitalsystem.entities.ClinicalData;
 import com.example.hospitalsystem.entities.Department;
 import com.example.hospitalsystem.entities.Patient;
 import com.example.hospitalsystem.exceptions.PatientDoesNotExistException;
+import com.example.hospitalsystem.mappers.DepartmentMapper;
+import com.example.hospitalsystem.mappers.PatientMapper;
 import com.example.hospitalsystem.repositories.PatientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,139 +27,152 @@ class PatientServiceTest {
     @Mock
     PatientRepository repository;
 
+    @Mock
+    PatientMapper patientMapper;
+    @Mock
+    DepartmentMapper departmentMapper;
+
     @InjectMocks
     PatientService service;
 
+
+    @Test
+    void shouldGetPatientByNameAndLastName() {
+        PatientDto patientDto = new PatientDto(0L, "John", "Doe", null, null, null);
+        Patient patient = new Patient();
+        patient.setId(0L);
+        patient.setName("John");
+        patient.setLastName("Doe");
+
+        when(repository.findByNameAndLastName("John", "Doe")).thenReturn(Optional.of(patient));
+        when(patientMapper.toDto(patient)).thenReturn(patientDto);
+
+        PatientDto returnedPatient = service.getPatient("John", "Doe");
+
+        assertEquals(patientDto, returnedPatient);
+        verify(repository, times(1)).findByNameAndLastName("John", "Doe");
+    }
+
     @Nested
-    class whenPatientExists{
+    class whenPatientExists {
         Patient patient = new Patient();
 
         @BeforeEach
-        void setUp(){
+        void setUp() {
             patient.setId(0L);
             when(repository.findById(0L)).thenReturn(Optional.of(patient));
         }
 
         @Test
-        void shouldGetPatientById(){
-            Patient returnedPatient = service.getPatient(0L);
+        void shouldGetPatientById() {
+            PatientDto patientDto = new PatientDto(0L, null, null, null, null, null);
 
-            assertEquals(patient,returnedPatient);
+            when(patientMapper.toDto(patient)).thenReturn(patientDto);
+            PatientDto returnedPatient = service.getPatient(0L);
+
+            assertEquals(patientDto, returnedPatient);
             verify(repository, times(1)).findById(0L);
         }
 
         @Test
-        void shouldGetPatientByNameAndLastName(){
-            patient.setName("John");
-            patient.setLastName("Doe");
-
-            when(repository.findByNameAndLastName("John","Doe")).thenReturn(Optional.of(patient));
-
-            Patient returnedPatient = service.getPatient("John","Doe");
-
-            assertEquals(patient,returnedPatient);
-            verify(repository, times(1)).findByNameAndLastName("John","Doe");
-        }
-
-        @Test
-        void shouldUpdatePatient(){
-            patient.setName("John");
-            patient.setLastName("Doe");
-            patient.setBirthDate(LocalDate.of(2000, 4, 4));
-
+        void shouldUpdatePatient() {
+            PatientSummaryDto updatedPatientDto = new PatientSummaryDto("George", null, null);
             Patient updatedPatient = new Patient();
-            updatedPatient.setName("Gorge");
-            updatedPatient.setLastName("Smith");
-            updatedPatient.setBirthDate(LocalDate.of(2001, 5, 5));
+            updatedPatient.setId(0L);
+            updatedPatient.setName("George");
 
-            service.updatePatient(0L, updatedPatient);
+            when(patientMapper.updatePatientFromDto(updatedPatientDto, patient)).thenReturn(updatedPatient);
 
-            assertEquals(patient,updatedPatient);
+            service.updatePatient(0L, updatedPatientDto);
+
             verify(repository, times(1)).findById(0L);
-            verify(repository, times(1)).save(patient);
+            verify(repository, times(1)).save(updatedPatient);
         }
 
         @Test
-        void shouldDischargePatient(){
+        void shouldDischargePatient() {
             AdmissionState state = new AdmissionState();
             state.setDischarge(false);
-            patient.setAdmissionState(List.of(state));
+            patient.setAdmissionStates(List.of(state));
             service.dischargePatient(0L);
 
-            assertTrue(patient.getCurrentState().isDischarge());
-            assertNotNull(patient.getCurrentState().getExitingDate());
+            assertTrue(patient.getCurrentAdmissionState().isDischarge());
+            assertNotNull(patient.getCurrentAdmissionState().getExitingDate());
             verify(repository, times(1)).findById(0L);
             verify(repository, times(1)).save(patient);
         }
 
         @Test
-        void shouldGetAllClinicalData(){
-            AdmissionState state1 = new AdmissionState();
-            ClinicalData clinicalData1 = new ClinicalData();
-            clinicalData1.setClinicalRecord("R1");
-            state1.setClinicalData(clinicalData1);
-            AdmissionState state2 = new AdmissionState();
-            ClinicalData clinicalData2 = new ClinicalData();
-            clinicalData2.setClinicalRecord("R2");
-            state2.setClinicalData(clinicalData2);
-            patient.setAdmissionState(List.of(state1, state2));
+        void shouldGetAllClinicalData() {
+            ClinicalDataDto clinicalDataDto1 = new ClinicalDataDto("R1");
+            ClinicalDataDto clinicalDataDto2 = new ClinicalDataDto("R2");
 
-            List<ClinicalData> clinicalDataList = service.getAllClinicalData(0L);
+            AdmissionStateDto state1Dto = new AdmissionStateDto(null, null, null, null, null, null, clinicalDataDto1);
+            AdmissionStateDto state2Dto = new AdmissionStateDto(null, null, null, null, null, null, clinicalDataDto2);
 
-            assertEquals(List.of(state1.getClinicalData(),state2.getClinicalData()), clinicalDataList);
+            PatientDto patientDto = new PatientDto(0L, null, null, null, null, List.of(state1Dto, state2Dto));
 
+            when(patientMapper.toDto(patient)).thenReturn(patientDto);
+
+            List<ClinicalDataDto> clinicalDataList = service.getAllClinicalData(0L);
+
+            assertEquals(List.of(clinicalDataDto1, clinicalDataDto2), clinicalDataList);
             verify(repository, times(1)).findById(0L);
-            verify(repository,never()).save(ArgumentMatchers.any(Patient.class));
         }
 
         @Test
-        void shouldDeleteCurrentClinicalData(){
+        void shouldDeleteCurrentClinicalData() {
             AdmissionState state1 = new AdmissionState();
             ClinicalData clinicalData1 = new ClinicalData();
             clinicalData1.setClinicalRecord("R1");
             state1.setClinicalData(clinicalData1);
-            patient.setAdmissionState(List.of(state1));
+            patient.setAdmissionStates(List.of(state1));
 
             service.deleteCurrentClinicalData(0L);
 
-            assertNull(patient.getCurrentState().getClinicalData());
+            assertNull(patient.getCurrentAdmissionState().getClinicalData());
             verify(repository, times(1)).save(patient);
             verify(repository, times(1)).findById(0L);
         }
 
         @Test
-        void shouldAddAdmissionState(){
-            AdmissionState state1 = new AdmissionState();
-            patient.setAdmissionState(new ArrayList<>());
+        void shouldAddAdmissionState() {
+            AdmissionStateDto stateDto = new AdmissionStateDto(0L);
+            AdmissionState state = new AdmissionState();
+            state.setId(0L);
+            patient.setAdmissionStates(new ArrayList<>());
 
-            AdmissionState returnedState = service.addAdmissionState(0L, state1);
+            when(patientMapper.toEntity(stateDto)).thenReturn(state);
+            when(patientMapper.toDto(state)).thenReturn(stateDto);
 
-            state1.setPatient(patient);
+            AdmissionStateDto returnedState = service.addAdmissionState(0L, stateDto);
 
-            assertEquals(returnedState, state1);
-            assertEquals(patient, returnedState.getPatient());
+            assertEquals(returnedState, stateDto);
+            assertEquals(state.getPatient(), patient);
             verify(repository, times(1)).save(patient);
             verify(repository, times(1)).findById(0L);
         }
 
         @Test
-        void shouldGetClinicalRecordWhenItExists(){
-            AdmissionState state1 = new AdmissionState();
-            ClinicalData clinicalData1 = new ClinicalData();
-            clinicalData1.setClinicalRecord("R1");
-            state1.setClinicalData(clinicalData1);
-            patient.setAdmissionState(List.of(state1));
+        void shouldGetClinicalRecordWhenItExists() {
+            ClinicalDataDto clinicalDataDto = new ClinicalDataDto("R1");
+            AdmissionStateDto stateDto = new AdmissionStateDto(null, null, null, null, null, null, clinicalDataDto);
+            PatientDto patientDto = new PatientDto(null, null, null, null, null, List.of(stateDto));
+
+            when(patientMapper.toDto(patient)).thenReturn(patientDto);
 
             String clinicalRecord = service.getCurrentClinicalRecord(0L);
 
-            assertEquals(clinicalData1.getClinicalRecord(), clinicalRecord);
+            assertEquals(clinicalDataDto.clinicalRecord(), clinicalRecord);
             verify(repository, times(1)).findById(0L);
         }
 
         @Test
-        void shouldShowMessageWhenGettingClinicalRecordAndItDoesntExist(){
-            AdmissionState state1 = new AdmissionState();
-            patient.setAdmissionState(List.of(state1));
+        void shouldShowMessageWhenGettingClinicalRecordAndItDoesntExist() {
+            AdmissionStateDto stateDto = new AdmissionStateDto(null);
+            PatientDto patientDto = new PatientDto(null, null, null, null, null, List.of(stateDto));
+
+            when(patientMapper.toDto(patient)).thenReturn(patientDto);
             String message = service.getCurrentClinicalRecord(0L);
 
             assertEquals("No clinical dat exists", message);
@@ -168,37 +180,42 @@ class PatientServiceTest {
         }
 
         @Test
-        void shouldSetCurrentClinicalData(){
-            AdmissionState state1 = new AdmissionState();
-            patient.setAdmissionState(List.of(state1));
+        void shouldSetCurrentClinicalData() {
+            AdmissionState state = new AdmissionState();
+            patient.setAdmissionStates(List.of(state));
+            ClinicalDataDto dataDto = new ClinicalDataDto("R1");
             ClinicalData data = new ClinicalData();
-            data.setClinicalRecord("R");
+            data.setClinicalRecord("R1");
 
-            service.setCurrentClinicalData(0L, data);
+            when(patientMapper.toEntity(dataDto)).thenReturn(data);
+            service.setCurrentClinicalData(0L, dataDto);
 
-            assertEquals(state1.getClinicalData(), data);
-            assertEquals(state1,data.getAdmissionState());
+            assertEquals(state.getClinicalData(), data);
+            assertEquals(state, data.getAdmissionState());
             verify(repository, times(1)).save(patient);
             verify(repository, times(1)).findById(0L);
         }
 
         @Test
-        void shouldSetDepartment(){
+        void shouldSetDepartment() {
+            DepartmentDto departmentDto = new DepartmentDto(null, null, null, new HashSet<PatientSummaryDto>());
             Department department = new Department();
+            department.setPatients(new HashSet<Patient>());
 
-            service.setDepartment(0L, department);
+            when(departmentMapper.toEntity(departmentDto)).thenReturn(department);
+            service.setDepartment(0L, departmentDto);
 
-            assertEquals(department,patient.getDepartment());
-            assertEquals(department.getPatients().getFirst(),patient);
+            assertEquals(department, patient.getDepartment());
+            assertTrue(department.getPatients().contains(patient));
             verify(repository, times(1)).save(patient);
             verify(repository, times(1)).findById(0L);
         }
     }
 
     @Nested
-    class whenPatientDoesNotExist{
+    class whenPatientDoesNotExist {
         @Test
-        void shouldThrowExceptionWhenGettingById(){
+        void shouldThrowExceptionWhenGettingById() {
             when(repository.findById(0L)).thenReturn(Optional.empty());
 
             assertThrows(PatientDoesNotExistException.class, () -> service.getPatient(0L));
@@ -206,11 +223,11 @@ class PatientServiceTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenGettingByNameAndLastName(){
-            when(repository.findByNameAndLastName("John","Doe")).thenReturn(Optional.empty());
+        void shouldThrowExceptionWhenGettingByNameAndLastName() {
+            when(repository.findByNameAndLastName("John", "Doe")).thenReturn(Optional.empty());
 
-            assertThrows(PatientDoesNotExistException.class, () -> service.getPatient("John","Doe"));
-            verify(repository, times(1)).findByNameAndLastName("John","Doe");
+            assertThrows(PatientDoesNotExistException.class, () -> service.getPatient("John", "Doe"));
+            verify(repository, times(1)).findByNameAndLastName("John", "Doe");
         }
 
     }

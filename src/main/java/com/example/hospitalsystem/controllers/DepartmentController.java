@@ -1,5 +1,7 @@
 package com.example.hospitalsystem.controllers;
 
+import com.example.hospitalsystem.Dtos.DepartmentDto;
+import com.example.hospitalsystem.Dtos.DepartmentSummaryDto;
 import com.example.hospitalsystem.entities.Department;
 import com.example.hospitalsystem.services.AuditTrailService;
 import com.example.hospitalsystem.services.DepartmentService;
@@ -18,21 +20,21 @@ public class DepartmentController {
     }
 
     @PostMapping( "/add")
-    public void addDepartment(@RequestBody Department department) {
-        Department savedDepartment = departmentService.addDepartment(department);
-        auditTrailService.createAuditTrailForNewDepartment(savedDepartment.getId());
+    public void addDepartment(@RequestBody DepartmentDto department) {
+        DepartmentDto savedDepartment = departmentService.addDepartment(department);
+        auditTrailService.createAuditTrailForNewDepartment(savedDepartment.id());
     }
 
     @GetMapping("/{name}")
-    public Department getDepartment(@PathVariable String name) {
+    public DepartmentDto getDepartment(@PathVariable String name) {
         return departmentService.getDepartment(name);
     }
 
     @GetMapping("/all")
-    public Iterable<Department> getAllDepartments() {return departmentService.getAllDepartments();}
+    public Iterable<DepartmentDto> getAllDepartments() {return departmentService.getAllDepartments();}
 
     @PutMapping("/{id}")
-    public void updateDepartment(@PathVariable Long id, @RequestBody Department department) {
+    public void updateDepartment(@PathVariable Long id, @RequestBody DepartmentSummaryDto department) {
         departmentService.updateDepartment(id,department);
     }
 

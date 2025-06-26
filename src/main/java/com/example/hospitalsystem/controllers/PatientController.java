@@ -1,6 +1,9 @@
 package com.example.hospitalsystem.controllers;
 
+import com.example.hospitalsystem.Dtos.AdmissionStateDto;
+import com.example.hospitalsystem.Dtos.ClinicalDataDto;
 import com.example.hospitalsystem.Dtos.PatientDto;
+import com.example.hospitalsystem.Dtos.PatientSummaryDto;
 import com.example.hospitalsystem.entities.AdmissionState;
 import com.example.hospitalsystem.entities.ClinicalData;
 import com.example.hospitalsystem.entities.Patient;
@@ -27,24 +30,24 @@ public class PatientController {
     }
 
     @PostMapping("/add")
-    public Patient addPatient(@RequestBody PatientDto patient) {
-        Patient savedPatient = patientService.savePatient(patient);
-        auditTrailService.createAuditTrailForNewPatient(savedPatient.getId());
-        return savedPatient;
+    public PatientDto addPatient(@RequestBody PatientDto patient) {
+        PatientDto newPatient = patientService.savePatient(patient);
+        auditTrailService.createAuditTrailForNewPatient(newPatient.id());
+        return newPatient;
     }
 
     @GetMapping
-    public Patient getPatient(@RequestParam String name, @RequestParam String lastName) {
+    public PatientDto getPatient(@RequestParam String name, @RequestParam String lastName) {
         return patientService.getPatient(name, lastName);
     }
 
     @GetMapping("/{id}")
-    public Patient getPatient(@PathVariable Long id) {
+    public PatientDto getPatient(@PathVariable Long id) {
         return patientService.getPatient(id);
     }
 
     @GetMapping("/all")
-    public Iterable<Patient> getAllPatients() {
+    public Iterable<PatientDto> getAllPatients() {
         return patientService.getAllPatients();
     }
 
@@ -54,54 +57,52 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public void updatePatient(@PathVariable Long id, @RequestBody Patient updatedPatient) throws IllegalAccessException {
-        Patient originalPatient = patientService.getPatient(id);
+    public void updatePatient(@PathVariable Long id, @RequestBody PatientSummaryDto updatedPatient) throws IllegalAccessException {
+        PatientDto originalPatient = patientService.getPatient(id);
         auditTrailService.createAuditTrailForPatientDataChange(originalPatient, updatedPatient);
         patientService.updatePatient(id, updatedPatient);
     }
 
-    @PutMapping("/{patientId}/department/{departmentId}")
-    public void assignDepartmentToPatient(@PathVariable Long patientId, @PathVariable Long departmentId) {
+    @PutMapping("/{patientId}/department/{newDepartmentId}")
+    public void assignDepartmentToPatient(@PathVariable Long patientId, @PathVariable Long newDepartmentId) {
         try {
-            auditTrailService.createAuditTrailForPatientDepartmentChange(patientId, patientService.getPatient(patientId).getDepartment().getId(), departmentId);
+            auditTrailService.createAuditTrailForPatientDepartmentChange(patientId, patientService.getPatient(patientId).department().id(), newDepartmentId);
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
-        patientService.setDepartment(patientId, departmentService.getDepartment(departmentId));
+        patientService.setDepartment(patientId, departmentService.getDepartment(newDepartmentId));
     }
 
     @PostMapping("/{id}/admissionState")
-    public void addAdmissionState(@PathVariable Long id, @RequestBody AdmissionState admissionState) {
-        List<AdmissionState> states = patientService.getAllAdmissionStates(id);
-        if(!states.getLast().isDischarge()){
+    public void addAdmissionState(@PathVariable Long id, @RequestBody AdmissionStateDto admissionState) {
+        List<AdmissionStateDto> states = patientService.getAllAdmissionStates(id);
+        if(!states.getLast().discharge()){
             throw new PatientIsAlreadyAdmittedException();
         }
-        AdmissionState admissionStateWithId = patientService.addAdmissionState(id, admissionState);
+        AdmissionStateDto admissionStateWithId = patientService.addAdmissionState(id, admissionState);
         auditTrailService.createAuditTrailForNewAdmission(id, admissionStateWithId, states);
     }
 
     @GetMapping("/{id}/admissionState")
-    public AdmissionState getCurrentAdmissionState(@PathVariable Long id) {
+    public AdmissionStateDto getCurrentAdmissionState(@PathVariable Long id) {
         return patientService.getCurrentAdmissionState(id);
     }
 
     @GetMapping("/{id}/allAdmissionStates")
-    public List<AdmissionState> getAllAdmissionStates(@PathVariable Long id) {
+    public List<AdmissionStateDto> getAllAdmissionStates(@PathVariable Long id) {
         return patientService.getAllAdmissionStates(id);
     }
 
     @PutMapping("/{id}/clinicalData")
-    public void setCurrentClinicalData(@PathVariable Long id, @RequestBody ClinicalData clinicalData) {
+    public void setCurrentClinicalData(@PathVariable Long id, @RequestBody ClinicalDataDto clinicalData) {
         String oldClinicalRecord = patientService.getCurrentClinicalRecord(id);
-        auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.getClinicalRecord());
+        auditTrailService.createAuditTrailForClinicalDataChange(id, oldClinicalRecord, clinicalData.clinicalRecord());
         patientService.setCurrentClinicalData(id, clinicalData);
     }
 
     @GetMapping("/{id}/clinicalData")
-    public ClinicalData getCurrentClinicalData(@PathVariable Long id) {
-        ClinicalData data = new ClinicalData();
-        data.setClinicalRecord(patientService.getCurrentClinicalRecord(id));
-        return data;
+    public ClinicalDataDto getCurrentClinicalData(@PathVariable Long id) {
+        return patientService.getCurrentClinicalData(id);
     }
 
     @PutMapping("/{id}/discharge")
@@ -111,7 +112,7 @@ public class PatientController {
     }
 
     @GetMapping("/{id}/allClinicalData")
-    public List<ClinicalData> getAllClinicalData(@PathVariable Long id) {
+    public List<ClinicalDataDto> getAllClinicalData(@PathVariable Long id) {
         return patientService.getAllClinicalData(id);
     }
 

@@ -10,10 +10,10 @@ import java.util.Objects;
 public class AuditTrail {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
-    private long patientId;
+    private Long patientId;
 
     @Column(nullable = false)
     private String tableName;
@@ -32,19 +32,19 @@ public class AuditTrail {
     private String newValue;
 
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public long getPatientId() {
+    public Long getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(long patient_id) {
+    public void setPatientId(Long patient_id) {
         this.patientId = patient_id;
     }
 

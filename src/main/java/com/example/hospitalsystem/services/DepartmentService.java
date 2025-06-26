@@ -1,9 +1,12 @@
 package com.example.hospitalsystem.services;
 
+import com.example.hospitalsystem.Dtos.DepartmentDto;
+import com.example.hospitalsystem.Dtos.DepartmentSummaryDto;
 import com.example.hospitalsystem.entities.Department;
 import com.example.hospitalsystem.exceptions.DepartmentAlreadyExistsException;
 import com.example.hospitalsystem.exceptions.DepartmentHasPatientsException;
 import com.example.hospitalsystem.exceptions.DepartmentDoesNotExistException;
+import com.example.hospitalsystem.mappers.DepartmentMapper;
 import com.example.hospitalsystem.repositories.DepartmentRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -11,29 +14,31 @@ import org.springframework.stereotype.Service;
 @Service
 public class DepartmentService {
     private final DepartmentRepository repository;
+    private final DepartmentMapper mapper;
 
-    public DepartmentService(DepartmentRepository repository) {
+    public DepartmentService(DepartmentRepository repository, DepartmentMapper mapper) {
+        this.mapper = mapper;
         this.repository = repository;
     }
 
-    public Department addDepartment(Department department) {
+    public DepartmentDto addDepartment(DepartmentDto department) {
         try {
-            return repository.save(department);
+            return mapper.toDto(repository.save(mapper.toEntity(department)));
         } catch (DataIntegrityViolationException e) {
             throw new DepartmentAlreadyExistsException("Department with that name or code already exists");
         }
     }
 
-    public Iterable<Department> getAllDepartments() {
-        return repository.findAll();
+    public Iterable<DepartmentDto> getAllDepartments() {
+        return mapper.toDtos(repository.findAll());
     }
 
-    public Department getDepartment(String name) {
-        return repository.findByName(name).orElseThrow(() -> new DepartmentDoesNotExistException("Department with name " + name + " does not exist"));
+    public DepartmentDto getDepartment(String name) {
+        return mapper.toDto(repository.findByName(name).orElseThrow(() -> new DepartmentDoesNotExistException("Department with name " + name + " does not exist")));
     }
 
-    public Department getDepartment(Long id) {
-        return repository.findById(id).orElseThrow(() -> new DepartmentDoesNotExistException("Department with id " + id + " does not exist"));
+    public DepartmentDto getDepartment(Long id) {
+        return mapper.toDto(repository.findById(id).orElseThrow(() -> new DepartmentDoesNotExistException("Department with id " + id + " does not exist")));
     }
 
     public String deleteDepartment(long id) {
@@ -46,13 +51,10 @@ public class DepartmentService {
         }
     }
 
-    public void updateDepartment(long id, Department updatedDepartment) {
+    public void updateDepartment(long id, DepartmentSummaryDto updatedDepartment) {
         Department department = repository.findById(id).orElseThrow(() -> new DepartmentDoesNotExistException("Department with id " + id + " does not exist"));
-
-        updatedDepartment.setId(department.getId());
-
         try {
-            repository.save(updatedDepartment);
+            repository.save(mapper.updateDepartmentFromDto(updatedDepartment, department));
         } catch (DataIntegrityViolationException e) {
             throw new DepartmentAlreadyExistsException("The code or name is taken by another department");
         }

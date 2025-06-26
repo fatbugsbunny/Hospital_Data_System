@@ -1,16 +1,32 @@
 package com.example.hospitalsystem.mappers;
 
+import com.example.hospitalsystem.Dtos.AdmissionStateDto;
+import com.example.hospitalsystem.Dtos.ClinicalDataDto;
 import com.example.hospitalsystem.Dtos.PatientDto;
+import com.example.hospitalsystem.Dtos.PatientSummaryDto;
+import com.example.hospitalsystem.entities.AdmissionState;
+import com.example.hospitalsystem.entities.ClinicalData;
 import com.example.hospitalsystem.entities.Patient;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
-import com.example.hospitalsystem.Dtos.PatientDto;
+import org.mapstruct.*;
 
-@Mapper
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS, uses = DepartmentMapper.class
+)
 public interface PatientMapper {
 
-    PatientMapper instance = Mappers.getMapper(PatientMapper.class);
+    PatientDto toDto(Patient patient);
+    Patient toEntity(PatientDto patientDto);
 
-    PatientDto patientToPatientDto(Patient patient);
+    PatientSummaryDto toPatientSummaryDto(Patient patient);
+    Patient fromPatientSummaryToEntity(PatientSummaryDto patientSummaryDto);
+
+    AdmissionStateDto toDto(AdmissionState admissionState);
+    AdmissionState toEntity(AdmissionStateDto admissionStateDto);
+
+    ClinicalDataDto toDto(ClinicalData clinicalData);
+    ClinicalData toEntity(ClinicalDataDto clinicalDataDto);
+
+
+    Iterable<PatientDto> toDtos(Iterable<Patient> patients);
+    Patient updatePatientFromDto(PatientSummaryDto patientDto, @MappingTarget Patient patient);
+    void updateDtoFromUser(Patient patient, @MappingTarget PatientDto patientDto);
 }

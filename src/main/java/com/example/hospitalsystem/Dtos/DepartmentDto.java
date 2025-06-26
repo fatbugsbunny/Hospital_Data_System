@@ -1,6 +1,6 @@
 package com.example.hospitalsystem.Dtos;
 
-import java.util.List;
+import java.util.Set;
 
-public record DepartmentDto(long id, String code, String name, List<PatientDto> patients) {
+public record DepartmentDto(Long id, String code, String name, Set<PatientSummaryDto> patients) {
 }

@@ -6,12 +6,13 @@ import jakarta.persistence.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 public class Department {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false,unique = true)
     private String code;
@@ -19,19 +20,26 @@ public class Department {
     @Column(nullable = false,unique = true)
     private String name;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
-    private List<Patient> patients;
+    private Set<Patient> patients;
+
+    public void addPatient(Patient patient) {
+        patients.add(patient);
+    }
+
+    public void removePatient(Patient patient){
+        patients.remove(patient);
+    }
 
     public boolean hasPatients(){
         return patients != null && !patients.isEmpty();
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -51,11 +59,11 @@ public class Department {
         this.name = name;
     }
 
-    public List<Patient> getPatients() {
+    public Set<Patient> getPatients() {
         return patients;
     }
 
-    public void setPatients(List<Patient> patients) {
+    public void setPatients(Set<Patient> patients) {
         this.patients = patients;
     }
 

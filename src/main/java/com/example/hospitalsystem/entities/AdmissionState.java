@@ -11,13 +11,11 @@ import java.util.Objects;
 public class AdmissionState {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(nullable = false)
     private LocalDateTime enteringDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column
     private LocalDateTime exitingDate;
 
@@ -34,7 +32,6 @@ public class AdmissionState {
     @JoinColumn(name = "clinical_data", referencedColumnName = "id")
     private ClinicalData clinicalData;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
@@ -106,12 +103,12 @@ public class AdmissionState {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof AdmissionState that)) return false;
-        return id == that.id && discharge == that.discharge && Objects.equals(enteringDate, that.enteringDate) && Objects.equals(exitingDate, that.exitingDate) && Objects.equals(cause, that.cause) && Objects.equals(reason, that.reason) && Objects.equals(clinicalData, that.clinicalData) && Objects.equals(patient, that.patient);
+        if (!(o instanceof AdmissionState state)) return false;
+        return Objects.equals(id, state.id) && Objects.equals(enteringDate, state.enteringDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, enteringDate, exitingDate, cause, reason, discharge, clinicalData, patient);
+        return Objects.hash(id, enteringDate);
     }
 }
